@@ -95,7 +95,9 @@ public class StudentIntegrationTest {
 		
 		Student studentToCreate = new Student();
 		studentToCreate.setName("Rémy Girodon");
-		studentToCreate.setCulturalOption(option1);
+		
+		option1.addStudent(studentToCreate);
+		
 		this.persistStudent(studentToCreate);
 		
 		List<Student> students = this.findAllStudents();
