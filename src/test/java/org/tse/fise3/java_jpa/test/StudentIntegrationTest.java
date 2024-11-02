@@ -7,6 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.tse.fise3.java_jpa.model.Course;
 import org.tse.fise3.java_jpa.model.CulturalOption;
 import org.tse.fise3.java_jpa.model.Student;
 
@@ -26,12 +27,16 @@ public class StudentIntegrationTest {
 		this.em = this.emf.createEntityManager();
 		
 		this.createDefaultCulturalOptions();
+		
+		this.createDefaultCourses();
 	}
 
 	@AfterEach
 	public void destroy() {
 		
 		this.deleteDefaultCulturalOptions();
+		
+		this.deleteDefaultCourses();
 		
 		if (this.em != null) {
 			this.em.close();
@@ -60,8 +65,7 @@ public class StudentIntegrationTest {
 		
 		CulturalOption option3 = new CulturalOption();
 		option3.setName("Choral");
-		this.persistCulturalOption(option3);
-		
+		this.persistCulturalOption(option3);		
 	}
 	
 	private List<CulturalOption> findAllCulturalOptions() {
@@ -83,20 +87,71 @@ public class StudentIntegrationTest {
 		this.em.getTransaction().commit();
 	}
 	
-	private CulturalOption findCulturalOptionById(long l) {
+	private CulturalOption findCulturalOptionById(long id) {
 		
-		return this.em.find(CulturalOption.class, 1L);
+		return this.em.find(CulturalOption.class, id);
+	}
+	
+	private void createDefaultCourses() {
+		
+		Course course1 = new Course();
+		course1.setName("Computer Science");
+		this.persistCourse(course1);
+		
+		Course course2 = new Course();
+		course2.setName("Network");
+		this.persistCourse(course2);
+		
+		Course course3 = new Course();
+		course3.setName("Data Science");
+		this.persistCourse(course3);		
+	}
+	
+	private void persistCourse(Course course) {
+		this.em.getTransaction().begin();
+		this.em.persist(course);
+		this.em.getTransaction().commit();
+	}
+	
+	private Course findCourseById(long id) {
+		
+		return this.em.find(Course.class, id);
+	}
+	
+	private void deleteCourse(Course course) {
+		this.em.getTransaction().begin();
+		this.em.remove(course);
+		this.em.getTransaction().commit();
+	}
+	
+	private List<Course> findAllCourses() {
+		String selectQuery = "SELECT course FROM Course course";
+		TypedQuery<Course> selectFromCourseTypedQuery = em.createQuery(selectQuery, Course.class);
+		List<Course> courses = selectFromCourseTypedQuery.getResultList();
+		return courses;
+	}
+	
+	private void deleteDefaultCourses() {
+		List<Course> courses = this.findAllCourses();
+		for (Course course : courses) {
+			this.deleteCourse(course);
+		}
 	}
 	
 	@Test
 	public void persistStudentThenRetrieveTheDetails() {
 		
 		CulturalOption option1 = this.findCulturalOptionById(1L);
+		Course course1 = this.findCourseById(1L);
+		Course course2 = this.findCourseById(2L);
 		
 		Student studentToCreate = new Student();
 		studentToCreate.setName("Rémy Girodon");
 		
 		option1.addStudent(studentToCreate);
+		
+		course1.addStudent(studentToCreate);
+		course2.addStudent(studentToCreate);
 		
 		this.persistStudent(studentToCreate);
 		
@@ -104,9 +159,10 @@ public class StudentIntegrationTest {
 		assertEquals(1, students.size());
 		
 		Student studentFound = students.get(0);
-		assertEquals(1L, studentFound.getId().longValue());
+		assertEquals(1L, studentFound.getId());
 		assertEquals("Rémy Girodon", studentFound.getName());
 		assertEquals("Painting", studentFound.getCulturalOption().getName());
+		assertEquals(2, studentFound.getCourses().size());
 		
 		this.deleteStudent(studentFound);
 		
