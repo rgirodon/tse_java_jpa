@@ -1,6 +1,7 @@
 package org.tse.fise3.java_jpa.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.tse.fise3.java_jpa.model.Course;
 import org.tse.fise3.java_jpa.model.CulturalOption;
 import org.tse.fise3.java_jpa.model.Student;
+import org.tse.fise3.java_jpa.model.Teacher;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -94,17 +96,34 @@ public class StudentIntegrationTest {
 	
 	private void createDefaultCourses() {
 		
+		Teacher teacher1 = new Teacher();
+		teacher1.setName("Christophe Gravier");
+		this.persistTeacher(teacher1);
+		
 		Course course1 = new Course();
 		course1.setName("Computer Science");
+		course1.setTeacher(teacher1);
 		this.persistCourse(course1);
+		
+		Teacher teacher2 = new Teacher();
+		teacher2.setName("Kamal Singh");
+		this.persistTeacher(teacher2);
 		
 		Course course2 = new Course();
 		course2.setName("Network");
+		course2.setTeacher(teacher2);
 		this.persistCourse(course2);
 		
 		Course course3 = new Course();
 		course3.setName("Data Science");
+		course3.setTeacher(teacher1);
 		this.persistCourse(course3);		
+	}
+	
+	private void persistTeacher(Teacher teacher) {
+		this.em.getTransaction().begin();
+		this.em.persist(teacher);
+		this.em.getTransaction().commit();
 	}
 	
 	private void persistCourse(Course course) {
@@ -136,6 +155,24 @@ public class StudentIntegrationTest {
 		for (Course course : courses) {
 			this.deleteCourse(course);
 		}
+		
+		List<Teacher> teachers = this.findAllTeachers();
+		for (Teacher teacher : teachers) {
+			this.deleteTeacher(teacher);
+		}
+	}
+	
+	private void deleteTeacher(Teacher teacher) {
+		this.em.getTransaction().begin();
+		this.em.remove(teacher);
+		this.em.getTransaction().commit();
+	}
+	
+	private List<Teacher> findAllTeachers() {
+		String selectQuery = "SELECT teacher FROM Teacher teacher";
+		TypedQuery<Teacher> selectFromTeacherTypedQuery = em.createQuery(selectQuery, Teacher.class);
+		List<Teacher> teachers = selectFromTeacherTypedQuery.getResultList();
+		return teachers;
 	}
 	
 	@Test
@@ -163,6 +200,22 @@ public class StudentIntegrationTest {
 		assertEquals("Rémy Girodon", studentFound.getName());
 		assertEquals("Painting", studentFound.getCulturalOption().getName());
 		assertEquals(2, studentFound.getCourses().size());
+		
+		boolean networkFound = false;
+		
+		for (Course studentCourse : studentFound.getCourses()) {
+			
+			if ("Network".equals(studentCourse.getName())) {
+				
+				networkFound = true;
+				
+				assertEquals("Kamal Singh", studentCourse.getTeacher().getName());
+			}
+		}
+		
+		if (!networkFound) {
+			fail("Student not inscribed to Network course !");
+		}
 		
 		this.deleteStudent(studentFound);
 		

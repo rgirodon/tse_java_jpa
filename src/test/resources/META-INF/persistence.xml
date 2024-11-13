@@ -8,6 +8,7 @@
 		<class>org.tse.fise3.java_jpa.model.Student</class>
 		<class>org.tse.fise3.java_jpa.model.CulturalOption</class>
 		<class>org.tse.fise3.java_jpa.model.Course</class>
+		<class>org.tse.fise3.java_jpa.model.Teacher</class>
 		<properties>
 			<property name="jakarta.persistence.jdbc.driver" value="org.h2.Driver" />
 			<property name="jakarta.persistence.jdbc.url" value="jdbc:h2:mem:test" />
